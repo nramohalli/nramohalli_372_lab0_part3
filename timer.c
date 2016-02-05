@@ -6,6 +6,7 @@
  */
 
 #include <xc.h>
+#include "timer.h"
 
 void initTimer1(){
     TMR1=0; //clear timer
@@ -14,28 +15,32 @@ void initTimer1(){
     T1CONbits.TCS=0;//counter
     IEC0bits.T1IE=1; //interrupt configuration
     IFS0bits.T1IF=0;
-    IPC1bits.T1IP=3; //priority
-    //T1CONbits.ON=1; //turning timer on
+    IPC1bits.T1IP=7; //priority
+    T1CONbits.ON=1; //turning timer on
 
 }
-void initTimer2(){
-    TMR2=0; //clear timer
-    PR2=20000;//initializing PR1
-    T2CONbits.TCKPS= 3;//setting prescalar for 1 sec
-    T2CONbits.TCS=0;//counter
-    IEC0bits.T2IE=1; //interrupt configuration
+
+initTimer2(){
+    TMR2=0;
+    T2CONbits.TCKPS=0;
+    T2CONbits.TCS=0;
     IFS0bits.T2IF=0;
-    IPC2bits.T2IP=3; //priority
-    //T2CONbits.ON=1; //turning timer on
-
 }
 
-
+delayMs(unsigned int delay){
+    TMR2= 0;
+    PR2 = 624*delay;
+    IFS0bits.T2IF=0;
+    T2CONbits.ON = 1;
+    while(IFS0bits.T2IF==0){};
+    T2CONbits.ON=0;
+}
 
 void resetTimer1() {
     TMR1=0;
     T1CONbits.ON=0;
 }
+
 void resetTimer2() {
     TMR2=0;
     T2CONbits.ON=0;

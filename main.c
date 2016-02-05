@@ -1,9 +1,4 @@
-/* 
- * File:   main.c
- * Author: gvanhoy/ nramohalli
- * Description: lab 0.
- * Created on August 27, 2015, 10:14 AM
- */
+
 
 #include <xc.h>
 #include <sys/attribs.h>
@@ -20,10 +15,13 @@
 #define INPUT 1
 
 //TODO: Define states of the state machine
-//typedef enum stateTypeEnum{led1,led2,led3} stateType;
+typedef enum stateTypeEnum{led1,led2,led3} stateType;
 
-volatile int state=1;//declaring a global volatile variable
-unsigned int temp=0;
+//volatile int state=1;//declaring a global volatile variable
+volatile stateType state=led1;
+volatile int time=0;
+volatile int up=0;//if up = 1 lights going backwards
+volatile int switch1=1; //if switch is pressed we change the direction of the lights
 
 //TODO: Use volatile variables that change within interrupts
 
@@ -33,76 +31,118 @@ int main() {
 
     //TODO: Write each initialization function--done!
     initLEDs();
-    initTimer1();
-    //initTimer2();
-  
+    //initTimer1();
+   initTimer2();
     initSwitch1();
     
     
     while(1){         
         switch(state)
        {
-                case 1:
+                case led1:
+                    //state=2;
+                    if(up==1)
+                    {
+                        state=led3;
+                    }
+                    else if(switch1==1)
+                    {
+                        state=led2;
+                    }
                     
-                    LATDbits.LATD0=1;
-                    LATDbits.LATD1=0;
-                    LATDbits.LATD2=0;
+                    up=0;
+                    switch1=0;
+                     delayMs(10);
                     break;
                 
-                case 2:
-                    LATDbits.LATD0=0;
-                    LATDbits.LATD1=1;
-                    LATDbits.LATD2=0;
+                case led2:
+                    //state=3;
+                    if(up==1)
+                    {
+                        state=led1;
+                    }
+                    else if(switch1==1)
+                    {
+                        state=led3;
+                    }
+                    
+                    up=0;
+                    switch1=0;
+                      delayMs(10);
                     break;
                      
-                case 3:
-                    LATDbits.LATD0=0;
-                    LATDbits.LATD1=0;
-                    LATDbits.LATD2=1;
-                    break;
-                
-                case 4: 
-                    T2CONbits.ON=1;
-             
-                    break;
-                case 5:
-                    T2CONbits.ON=1;
-                    break;
-                case 6:
-                    T2CONbits.ON=1;
+                case led3:
+                    //state=1;
+                    if(up==1)
+                    {
+                        state=led2;
+                    }
+                    else if(switch1==1)
+                    {
+                        state=led1;
+                    }
+                    
+                    up=0;
+                    switch1=0;
+                       delayMs(10);
                     break;
         }
-        resetTimer1();
-        resetTimer2();
+          switch(state)
+          {
+            case led1:
+                 LATDbits.LATD0=1;
+                    LATDbits.LATD1=0;
+                    LATDbits.LATD2=0;
+                    
+                    break;
+            case led2:
+                LATDbits.LATD0=0;
+                    LATDbits.LATD1=1;
+                    LATDbits.LATD2=0;
+                    
+                    break;
+            case led3:
+                 LATDbits.LATD0=0;
+                    LATDbits.LATD1=0;
+                    LATDbits.LATD2=1;
+                    
+                    break;
+          }
+              
+        
+        
     }
     
     return 0;
 }
 
 
-void __ISR(_TIMER_1_VECTOR, IPL3SRS)_T1Interrupt()
+void __ISR(_TIMER_1_VECTOR, IPL7SRS)_T1Interrupt()
 {
-  if(state==1) state=5;
-  else if(state==2)state=6;
-  else if(state==3)state=4;
-  T1CONbits.ON=0;
-     TMR1=0;
-IFS0bits.T1IF=0;  
+ IFS0bits.T1IF=0; 
+time=time+1;
 }
 
-void __ISR(_TIMER_2_VECTOR, IPL3SRS)_T2Interrupt()
-{
-   if(state==4) state=2; 
-  else if(state==5)state=3;
-  else if(state==6)state=1;
-  
-IFS0bits.T2IF=0;  
-}
-void __ISR(_CHANGE_NOTICE_VECTOR, IPL2SRS) _CNInterrupt() {
+
+
+void __ISR(_CHANGE_NOTICE_VECTOR, IPL7SRS) _CNInterrupt() {
     
-    if(state==1) state=4;
-    else if(state==2)state=5;
-    else if(state==3)state=6;
-  if(PORTDbits.RD6==PRESSED) T1CONbits.ON=1;//put in if- else with condition of switch being pressed...maybe while loop
-  IFS1bits.CNDIF=0;
-}
+    IFS1bits.CNDIF=0;
+    initTimer1(); 
+
+     
+    int j;
+    j=PORTD;
+    
+    if(PORTDbits.RD6==1 && time>=1)
+    {
+        up=1;  
+    }
+    else if(PORTDbits.RD6==1)
+    {
+        switch1=1;
+    }
+      time=0;
+   }
+  
+

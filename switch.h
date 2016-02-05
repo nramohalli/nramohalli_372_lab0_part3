@@ -5,6 +5,6 @@
 #define PRESSED 0
 #define RELEASED 1
 
-void initSwitch1();
+void initSwitches();
 
 #endif

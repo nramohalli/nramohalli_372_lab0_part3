@@ -10,6 +10,11 @@
 
 
 void initTimer1();
+void initTimer2();
+void delayMs(unsigned int delay);
+void resetT1();
+void resetT2();
+
 
 #endif	/* TIMER_H */
 
